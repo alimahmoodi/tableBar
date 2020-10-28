@@ -1,0 +1,13 @@
+.custom tr:nth-child(even) {
+    background-color: #eee;
+}
+.custom tr:nth-child(odd) {
+    background-color: #fff;
+}
+.custom th {
+    background-color: black;
+    color: white;
+}
+.Dragging {
+    color: blue;
+}
