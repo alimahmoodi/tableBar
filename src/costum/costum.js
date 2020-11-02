@@ -1,10 +1,24 @@
 import React, { useState, useRef } from "react";
-import classes from "./costum.module.css";
+import { sortableContainer, sortableElement } from "react-sortable-hoc";
+import arrayMove from "array-move";
+
+const SortableContainer = sortableContainer(({ children }) => {
+    return <tbody>{children}</tbody>;
+});
+
+const SortableItem = sortableElement(({ value }) => (
+    <tr key={value.key}>
+        {Object.keys(value).map((itemInner, index) => {
+            if (itemInner !== "key") {
+                return <td key={index}>{value[itemInner]}</td>;
+            }
+        })}
+    </tr>
+));
 
 const Custom = () => {
     //test
-    const ref = useRef();
-    const nowClicked = useRef();
+
     const [head, setHead] = useState([
         {
             title: "Name",
@@ -54,53 +68,12 @@ const Custom = () => {
         },
     ]);
 
-    const dargHandler = (e, keyOfRow, status) => {
-        console.log(keyOfRow);
-        const copyOfdata = [...data];
-        copyOfdata.forEach((item, index) => {
-            Object.keys(item).forEach((itemInner, index) => {
-                if (item.key === keyOfRow) {
-                    if (status === "start") {
-                        item.isDrag = true;
-                    } else if (status === "end") {
-                        item.isDrag = false;
-                    }
-                }
-            });
-        });
-        setData(copyOfdata);
-    };
-
-    const dragOverTable = (e) => {
-        e.preventDefault();
-        const table = ref.current;
-        const now = nowClicked.current;
-        const dragableElements = table.getElementsByTagName("tr");
-        console.log("tr tag", table.getElementsByTagName("tr"));
-        console.log("slam", table, e.clientY, now);
-
-        const near = dragableElements.reduce(
-            (closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = e.clientY - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            },
-            { offset: Number.NEGATIVE_INFINITY }
-        ).element;
-        console.log("near", near);
+    const onSortEnd = ({ oldIndex, newIndex }) => {
+        setData((data) => arrayMove(data, oldIndex, newIndex));
     };
 
     return (
-        <table
-            style={{ margin: "200px" }}
-            ref={ref}
-            onDragOver={(e) => dragOverTable(e)}
-            className={classes.custom}
-        >
+        <table style={{ margin: "200px" }}>
             <thead>
                 <tr>
                     {head.map((item, index) => {
@@ -108,26 +81,11 @@ const Custom = () => {
                     })}
                 </tr>
             </thead>
-            <tbody>
-                {data.map((item, index) => {
-                    return (
-                        <tr
-                            key={item.key}
-                            draggable="true"
-                            onDragStart={(e) => dargHandler(e, item.key, "start")}
-                            onDragEnd={(e) => dargHandler(e, item.key, "end")}
-                            style={{ color: item.isDrag && "red" }}
-                            ref={nowClicked}
-                        >
-                            {Object.keys(item).map((itemInner, index) => {
-                                if (itemInner !== "key") {
-                                    return <td key={index}>{item[itemInner]}</td>;
-                                }
-                            })}
-                        </tr>
-                    );
-                })}
-            </tbody>
+            <SortableContainer onSortEnd={onSortEnd}>
+                {data.map((value, index) => (
+                    <SortableItem key={index} index={index} value={value} />
+                ))}
+            </SortableContainer>
         </table>
     );
 };
